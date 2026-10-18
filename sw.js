@@ -1,5 +1,5 @@
 // Entreno - offline cache. Change VERSION when you upload a new index.html.
-const VERSION = "entreno-v1";
+const VERSION = "entreno-v2";
 const FILES = [
   "./",
   "./index.html",
@@ -9,8 +9,14 @@ const FILES = [
   "./apple-touch-icon.png"
 ];
 
+// Only the app's own files are cached here. Your marks live in the phone's
+// app storage, which this file never touches.
 self.addEventListener("install", (event) => {
-  event.waitUntil(caches.open(VERSION).then((cache) => cache.addAll(FILES)));
+  event.waitUntil(
+    caches.open(VERSION).then((cache) =>
+      cache.addAll(FILES.map((url) => new Request(url, { cache: "reload" })))
+    )
+  );
   self.skipWaiting();
 });
 
