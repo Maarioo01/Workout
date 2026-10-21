@@ -1,5 +1,5 @@
 // Entreno - offline cache. Change VERSION when you upload a new index.html.
-const VERSION = "entreno-v2";
+const VERSION = "entreno-v3";
 const FILES = [
   "./",
   "./index.html",

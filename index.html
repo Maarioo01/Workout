@@ -741,6 +741,7 @@
   }
   .mig-quick {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: 8px;
     margin: 0 0 10px;
@@ -760,9 +761,10 @@
   .mig-list { padding-top: 4px; padding-bottom: 4px; }
   .mig-row {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px 10px;
     padding: 11px 0;
     border-bottom: 1px solid var(--border);
   }
@@ -773,6 +775,7 @@
   .seg {
     display: flex;
     flex: 0 0 auto;
+    margin-left: auto;
     gap: 2px;
     padding: 3px;
     background: var(--surface-2);
@@ -843,43 +846,78 @@
   "use strict";
 
   /* ================= DATA ================= */
-  var GROUPS = [
-    { key: "pecho", name: "Pecho", color: "var(--c-pecho)", exercises: [
-      "Press banca", "Press superior", "Polea baja Basic", "Polea baja McFit", "Aperturas máquina", "Press máquina", "Polea media", "Polea arriba"
-    ]},
-    { key: "triceps", name: "Tríceps", color: "var(--c-triceps)", exercises: [
-      "Press francés", "Unilateral", "Extensión polea"
-    ]},
-    { key: "espalda", name: "Espalda", color: "var(--c-espalda)", exercises: [
-      "Jalones", "One arm con disco", "Pullover", "Polea unilateral de lado", "Polea unilateral de frente", "Espalda en T", "One arm máquina"
-    ]},
-    { key: "biceps", name: "Bíceps", color: "var(--c-biceps)", exercises: [
-      "Polea abajo", "Mancuerna banco tumbado", "Mancuernas de pie", "Predicador"
-    ]},
-    { key: "hombro", name: "Hombro", color: "var(--c-hombro)", exercises: [
-      "Elevaciones banco mancuerna", "Elevaciones mancuerna", "Posterior polea", "Posterior máquina", "Elevaciones polea", "Elevaciones máquina"
-    ]},
-    { key: "pierna", name: "Pierna", color: "var(--c-pierna)", exercises: [
-      "Extensiones", "Femoral", "Gemelo", "Prensa", "Glúteos", "Aductor Basic", "Aductor McFit", "Abductor Basic", "Abductor McFit"
-    ]},
-    { key: "abdominales", name: "Abdominales", color: "var(--c-abdominales)", exercises: [
-      "Polea", "Rueda", "Inferiores barra"
-    ]}
+  var GROUP_META = [
+    { key: "pecho", name: "Pecho", color: "var(--c-pecho)" },
+    { key: "triceps", name: "Tríceps", color: "var(--c-triceps)" },
+    { key: "espalda", name: "Espalda", color: "var(--c-espalda)" },
+    { key: "biceps", name: "Bíceps", color: "var(--c-biceps)" },
+    { key: "hombro", name: "Hombro", color: "var(--c-hombro)" },
+    { key: "pierna", name: "Pierna", color: "var(--c-pierna)" },
+    { key: "abdominales", name: "Abdominales", color: "var(--c-abdominales)" }
   ];
 
-  function exerciseId(groupKey, exName) { return groupKey + "::" + exName; }
-  function findExercise(exId) {
-    for (var g of GROUPS) {
-      for (var e of g.exercises) {
-        if (exerciseId(g.key, e) === exId) return { group: g, name: e };
-      }
+  // The exercises each gym shows. Removing one from a list never deletes
+  // its marks: they stay saved and can still be seen in Progreso.
+  var CATALOG = {
+    barcelona: {
+      pecho: ["Press banca", "Press superior", "Polea baja Basic", "Polea baja McFit", "Aperturas máquina", "Press máquina", "Polea media", "Polea arriba"],
+      triceps: ["Press francés", "Unilateral", "Extensión polea"],
+      espalda: ["Jalones", "One arm con disco", "Pullover", "Polea unilateral de lado", "Polea unilateral de frente", "Espalda en T", "One arm máquina"],
+      biceps: ["Polea abajo", "Mancuerna banco tumbado", "Mancuernas de pie", "Predicador"],
+      hombro: ["Elevaciones banco mancuerna", "Elevaciones mancuerna", "Posterior polea", "Posterior máquina", "Elevaciones polea", "Elevaciones máquina"],
+      pierna: ["Extensiones", "Femoral", "Gemelo", "Prensa", "Glúteos", "Aductor Basic", "Aductor McFit", "Abductor Basic", "Abductor McFit"],
+      abdominales: ["Polea", "Rueda", "Inferiores barra", "Inferiores máquina"]
+    },
+    talavera: {
+      pecho: ["Press superior", "Polea baja Basic", "Aperturas máquina", "Press máquina", "Polea media", "Polea arriba"],
+      triceps: ["Press francés", "Unilateral", "Extensión polea"],
+      espalda: ["Jalones", "One arm con disco", "Pullover", "Polea unilateral de lado", "Polea unilateral de frente", "Espalda en T", "One arm máquina"],
+      biceps: ["Polea abajo", "Mancuerna banco tumbado", "Mancuernas de pie", "Predicador"],
+      hombro: ["Elevaciones banco mancuerna", "Elevaciones mancuerna", "Posterior polea", "Posterior máquina", "Elevaciones polea", "Elevaciones máquina"],
+      pierna: ["Extensiones", "Femoral sentado", "Gemelo", "Prensa", "Glúteos", "Aductor Basic", "Abductor Basic"],
+      abdominales: ["Polea", "Rueda", "Inferiores barra", "Inferiores máquina"]
+    },
+    inextremis: {
+      pecho: ["Press superior", "Polea abajo", "Polea arriba"],
+      espalda: ["Jalones", "Remo unilateral", "Polea unilateral"],
+      biceps: ["Polea", "Banco"],
+      hombro: ["Pájaro", "Polea"],
+      abdominales: ["Polea", "Inferiores colgados"]
     }
+  };
+
+  // Exercises renamed in one gym: their existing marks move to the new name.
+  var RENAMES = {
+    talavera: { "pierna::Femoral": "Femoral sentado" }
+  };
+
+  function exerciseId(groupKey, exName) { return groupKey + "::" + exName; }
+  function findGroup(key) {
+    for (var g of GROUP_META) { if (g.key === key) return g; }
     return null;
+  }
+  function groupsFor(gymKey) {
+    var cat = CATALOG[gymKey] || {};
+    return GROUP_META.filter(function(g){ return cat[g.key] && cat[g.key].length; }).map(function(g){
+      return { key: g.key, name: g.name, color: g.color, exercises: cat[g.key] };
+    });
+  }
+  function gymHasExercise(gymKey, exId) {
+    return groupsFor(gymKey).some(function(g){
+      return g.exercises.some(function(e){ return exerciseId(g.key, e) === exId; });
+    });
+  }
+  function findExercise(exId) {
+    var i = String(exId || "").indexOf("::");
+    if (i < 0) return null;
+    var g = findGroup(exId.slice(0, i));
+    return g ? { group: g, name: exId.slice(i + 2) } : null;
   }
 
   var GYMS = [
     { key: "barcelona", name: "Barcelona" },
-    { key: "talavera", name: "Talavera" }
+    { key: "talavera", name: "Talavera" },
+    { key: "inextremis", name: "In Extremis" }
   ];
   function findGym(key) {
     for (var g of GYMS) { if (g.key === key) return g; }
@@ -888,6 +926,19 @@
   function capFirst(t) { return t.charAt(0).toUpperCase() + t.slice(1); }
   function gymName(key) { var g = findGym(key); return g ? g.name : ""; }
   function hasValidGym(r) { return !!findGym(r.gym); }
+  // An old mark from an exercise that was split (Basic / McFit) and still
+  // needs the person to say which one it was.
+  function isLegacyRecord(r) {
+    return !!LEGACY[r.exId] && !(hasValidGym(r) && gymHasExercise(r.gym, r.exId));
+  }
+  function normalizeRecords() {
+    var changed = false;
+    records.forEach(function(r){
+      var to = RENAMES[r.gym] && RENAMES[r.gym][r.exId];
+      if (to) { r.exercise = to; r.exId = exerciseId(r.group, to); changed = true; }
+    });
+    return changed;
+  }
 
   // Exercises that were split into two. Old marks keep existing until the
   // person says which of the new versions they belong to.
@@ -935,7 +986,7 @@
   // marks exactly as they were saved by the previous version.
   (function keepSafetyCopy(){
     try {
-      var needsIt = records.some(function(r){ return !hasValidGym(r) || LEGACY[r.exId]; });
+      var needsIt = records.some(function(r){ return !hasValidGym(r) || isLegacyRecord(r); });
       if (needsIt && !localStorage.getItem(SNAPSHOT_KEY)) {
         localStorage.setItem(SNAPSHOT_KEY, localStorage.getItem(STORAGE_KEY) || "[]");
       }
@@ -953,6 +1004,8 @@
   function saveGym(key) {
     try { localStorage.setItem(GYM_KEY, key); } catch (e) {}
   }
+
+  if (normalizeRecords()) saveRecords(records);
 
   function addRecord(rec) {
     records.push(rec);
@@ -1035,7 +1088,7 @@
   /* ================= STATE ================= */
   var state = {
     tab: "log",
-    selectedGroupKey: GROUPS[0].key,
+    selectedGroupKey: GROUP_META[0].key,
     selectedExId: null,
     selectedDate: todayISO(),
     progressExId: null,
@@ -1082,7 +1135,10 @@
 
   function renderLog() {
     var main = document.getElementById("main");
-    var group = GROUPS.find(function(g){ return g.key === state.selectedGroupKey; }) || GROUPS[0];
+    var gymGroups = groupsFor(state.gym);
+    var group = gymGroups.find(function(g){ return g.key === state.selectedGroupKey; });
+    if (!group) { group = gymGroups[0]; state.selectedGroupKey = group.key; state.selectedExId = null; }
+    if (state.selectedExId && !gymHasExercise(state.gym, state.selectedExId)) state.selectedExId = null;
     var isToday = state.selectedDate === todayISO();
 
     var html = installHint();
@@ -1098,7 +1154,7 @@
 
     html += '<h2 class="section-title">Grupo muscular</h2>';
     html += '<div class="chip-row" id="chipRow">';
-    GROUPS.forEach(function(g){
+    gymGroups.forEach(function(g){
       html += '<button class="chip' + (g.key === group.key ? ' active' : '') + '" style="--group-color:' + g.color + '" data-group="' + g.key + '">' +
               '<span class="swatch"></span>' + escapeHtml(g.name) + '</button>';
     });
@@ -1273,15 +1329,31 @@
     html += '<h2 class="section-title">Ver progreso en ' + escapeHtml(gymName(state.gym)) + '</h2>';
     html += '<select class="exercise-picker" id="progressPicker">';
     html += '<option value="">Elige un ejercicio…</option>';
-    GROUPS.forEach(function(g){
+    var options = [];
+    groupsFor(state.gym).forEach(function(g){
       html += '<optgroup label="' + escapeHtml(g.name) + '">';
       g.exercises.forEach(function(exName){
         var exId = exerciseId(g.key, exName);
+        options.push(exId);
         html += '<option value="' + exId + '"' + (exId === state.progressExId ? ' selected' : '') + '>' + escapeHtml(exName) + '</option>';
       });
       html += '</optgroup>';
     });
+    // Exercises no longer in this gym's list but with saved marks here.
+    var retired = Array.from(new Set(records.filter(function(r){
+      return r.gym === state.gym && !gymHasExercise(state.gym, r.exId) && findExercise(r.exId);
+    }).map(function(r){ return r.exId; }))).sort();
+    if (retired.length) {
+      html += '<optgroup label="Ya no están en la lista">';
+      retired.forEach(function(exId){
+        var f = findExercise(exId);
+        options.push(exId);
+        html += '<option value="' + escapeHtml(exId) + '"' + (exId === state.progressExId ? ' selected' : '') + '>' + escapeHtml(f.name + ' (' + f.group.name + ')') + '</option>';
+      });
+      html += '</optgroup>';
+    }
     html += '</select>';
+    if (state.progressExId && options.indexOf(state.progressExId) === -1) state.progressExId = null;
 
     if (!state.progressExId) {
       html += '<div class="empty"><div class="big">Elige un ejercicio</div><div class="small">Verás su evolución de peso, tus mejores marcas<br>y el historial completo de series.</div></div>';
@@ -1416,7 +1488,7 @@
     var clearBtn = document.getElementById("clearExData");
     if (clearBtn) {
       clearBtn.addEventListener("click", function(){
-        if (confirm("¿Borrar el historial de este ejercicio en " + gymName(state.gym) + "? El del otro gimnasio no se toca. No se puede deshacer.")) {
+        if (confirm("¿Borrar el historial de este ejercicio en " + gymName(state.gym) + "? Los de los otros gimnasios no se tocan. No se puede deshacer.")) {
           records = records.filter(function(r){ return !(r.exId === state.progressExId && r.gym === state.gym); });
           saveRecords(records);
           renderProgress();
@@ -1557,7 +1629,7 @@
   }
 
   function importRecords(rawRecords, mode) {
-    var validGroupKeys = GROUPS.map(function(g){ return g.key; });
+    var validGroupKeys = GROUP_META.map(function(g){ return g.key; });
     var imported = 0, skippedDup = 0, skippedInvalid = 0;
 
     if (mode === "replace") {
@@ -1594,6 +1666,7 @@
       imported++;
     });
 
+    normalizeRecords();
     saveRecords(records);
     return { imported: imported, skippedDup: skippedDup, skippedInvalid: skippedInvalid };
   }
@@ -1755,7 +1828,7 @@
 
   /* ================= GYM ASSIGNMENT ================= */
   function needsMigration() {
-    return records.some(function(r){ return !hasValidGym(r) || LEGACY[r.exId]; });
+    return records.some(function(r){ return !hasValidGym(r) || isLegacyRecord(r); });
   }
 
   // mode "migrate": only marks without a gym / from a split exercise.
@@ -1775,7 +1848,7 @@
     });
     var legacy = {}, legacyCount = {};
     records.forEach(function(r){
-      if (!LEGACY[r.exId]) return;
+      if (!isLegacyRecord(r)) return;
       legacy[r.exId] = (previous && previous.legacy[r.exId]) || "";
       legacyCount[r.exId] = (legacyCount[r.exId] || 0) + 1;
     });
@@ -1807,7 +1880,7 @@
     if (m.mode === "migrate") {
       html += '<h2 class="section-title">Nueva versión</h2>';
       html += '<div class="data-card"><div class="mig-title">¿Dónde hiciste tus marcas?</div>';
-      html += '<p style="margin-bottom:0;">Ahora cada marca se guarda en su gimnasio, Barcelona o Talavera, para que los pesos no se mezclen. Indica dónde entrenaste cada día. <b>No se borra nada</b>: solo se les añade el gimnasio.</p></div>';
+      html += '<p style="margin-bottom:0;">Ahora cada marca se guarda en su gimnasio para que los pesos no se mezclen. Indica dónde entrenaste cada día. <b>No se borra nada</b>: solo se les añade el gimnasio.</p></div>';
     } else {
       html += '<h2 class="section-title">Corregir gimnasio por día</h2>';
       html += '<div class="data-card"><p style="margin-bottom:0;">Cambia el gimnasio de un día y se moverán todas las marcas de ese día.</p></div>';
@@ -1886,8 +1959,9 @@
       var choice = m.dayGym[r.date];
       if (findGym(choice) && (m.mode === "edit" || !hasValidGym(r))) r.gym = choice;
       var to = m.legacy[r.exId];
-      if (to) { r.exercise = to; r.exId = exerciseId(r.group, to); }
+      if (to && isLegacyRecord(r)) { r.exercise = to; r.exId = exerciseId(r.group, to); }
     });
+    normalizeRecords();
     saveRecords(records);
     if (m.mode === "migrate") {
       var latest = Object.keys(m.dayGym).sort().pop();
